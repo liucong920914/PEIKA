@@ -1,0 +1,33 @@
+HK&EU融合
+
+EU收款和收单目前所有的计费项已梳理；
+EU的收款业务类型、交易的流程状态，梳理80%，预计10.30完成；	
+
+1、部分EU业务逻辑还需要向产品和开发同事再细致了解（估计本周前31号前）；
+2、基于现有业务交易，设计账套（待与EU清算同事确认，下周开始）；
+3、参考HK的账务融合方案，制定EU账务改造的方案和排期（完成1后，与开发测试同事确认）；
+
+目标：
+
+账务只融合HK收款和EU收款？
+HK这套如何兼容EU的基于VA的业务模式
+提前考虑收单？
+
+==============================
+
+风控规则
+
+
+Merchant Banking Account	资金管理&收款管理                           	
+Merchant E-wallet	        资金管理-商户钱包&收款管理-收款账户管理         
+E-wallet Management	        资金管理-商户钱包-钱包账户管理	           	
+E-wallet Transaction	    资金管理-商户钱包-钱包收支明细		
+Adjustment Review	        资金管理-商户钱包-手工调账审核		
+E-wallet Status Review	    资金管理-商户钱包-钱包账户状态审核		
+Collection Account	        收款管理-收款账户管理-收款账户管理		
+Settlement	                HK收款管理-XXX		
+Records Check	            机构管理-机构对账		
+Records Overview	        收款对账		
+Records	                    收款对账差错处理		
+Configuration	            业务参数&规则引擎
+Risk Control Rules	        规则引擎-风控规则
