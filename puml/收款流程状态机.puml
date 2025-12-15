@@ -1,0 +1,64 @@
+@startuml COLLECTION
+
+[*] --> 初始
+
+初始 -[#Red]-> 已入账自动 : <font color=red>PASSED\nB2B白名单用户\n自动入账
+
+初始 -right[#Red]-> 待关联订单: <font color=red>PENDING
+
+初始 -[#Red]-> 关联订单待筛查 : <font color=red>PENDING\n自动关联订单
+
+待关联订单 --> 关联订单待筛查 : 手动关联订单
+
+state 材料审核中 {
+    关联订单待筛查 -[#Blue]-> 待初审 : <font color=Blue>PENDING
+    待初审 -down-> 待复审
+    待复审 -up-> 待初审
+    ' 待复审 --> 审核未通过
+    ' 审核未通过 --> 待初审 : 补充交易材料
+    待复审 --> 待机构申报审核
+    待机构申报审核 -right-> 待机构入账审核
+}
+
+待复审 --> 已入账
+
+待机构入账审核 --> 已入账
+
+关联订单待筛查 -[dashed,#Blue]left-> 已入账自动 : <font color=Blue>PASSED（暂不支持）
+
+关联订单待筛查 -[#Blue]right-> 待机构申报审核 : <font color=Blue>PENDING
+
+已入账自动 --> [*]
+
+已入账 --> [*]
+
+' 显示状态
+初始 : MPS 不显示
+初始 : OPS 初始
+
+待关联订单 : MPS 待关联订单
+待关联订单 : OPS 待关联订单
+
+关联订单待筛查 : MPS 材料审核中
+关联订单待筛查 : OPS 关联订单待筛查 
+
+待初审 : MPS 材料审核中
+待初审 : OPS 待初审
+
+待复审 : MPS 材料审核中
+待复审 : OPS 待复审
+
+待机构申报审核 : MPS 材料审核中
+待机构申报审核 : OPS 待机构申报审核
+
+待机构入账审核 : MPS 材料审核中
+待机构入账审核 : OPS 待机构入账审核
+
+
+已入账 : MPS 已入账
+已入账 : OPS 已入账
+
+已入账自动 : MPS 已入账
+已入账自动 : OPS 已入账自动
+
+@enduml
