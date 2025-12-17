@@ -148,9 +148,3 @@ v.    Account Balances API(账户余额查询)  --   Account Balances API
 vi.    Retrieve transaction details(账户交易明细查询)  -- Transaction Details
 vii.    SWIFT gpi for Corporates (g4C)  -- 
 
-
-
-
-自动审核通过
-流转默认状态
-后续规则处置
