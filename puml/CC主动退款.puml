@@ -1,4 +1,4 @@
-@startuml CC渠道系统退款
+@startuml CC渠道系统退款流程
 
 participant 商户 as merchant
 participant Paykka as pk
