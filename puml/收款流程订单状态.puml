@@ -1,0 +1,194 @@
+@startuml 状态映射关系-按Stage分类
+
+title 状态映射关系 - 按 Stage 分类（简化版）
+
+skinparam backgroundColor #FFFFFF
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+skinparam package {
+  BackgroundColor<<ORDER_RC>> #E3F2FD
+  BackgroundColor<<MODIFY>> #E8F5E9
+  BackgroundColor<<REVIEW>> #FFF3E0
+  BackgroundColor<<SETTLED>> #C8E6C9
+  BackgroundColor<<REFUND>> #FFE0B2
+}
+
+package "ORDER_RC 阶段 (收款订单风控阶段)" <<ORDER_RC>> {
+  card OrderRC [
+    **初始状态**
+    ....
+    stage = ORDER_RC
+    settleStatus = UNSETTLED
+    reviewStatus = NONE
+    refundStatus = NONE
+    ====
+    **opsStatus** = INITAL
+    **mpsStatus** = INITAL
+    ====
+    商户不可见
+    收款订单筛查中
+  ]
+}
+
+package "MODIFY 阶段 (商户可操作)" <<MODIFY>> {
+  card PendingRelate [
+    **待关联订单**
+    ....
+    stage = MODIFY
+    reviewStatus = NONE
+    ====
+    **opsStatus** = PENDING_RELATE
+    **mpsStatus** = PENDING_RELATE
+    ====
+    商户可操作
+  ]
+  
+  card CheckRejected [
+    **审核未通过**
+    ....
+    stage = MODIFY
+    reviewStatus = REJECTED
+    ====
+    **opsStatus** = CHECK_REJECTED
+    **mpsStatus** = CHECK_REJECTED
+  ]
+}
+
+package "REVIEW 阶段 (人工审核)" <<REVIEW>> {
+  card FirstReview [
+    **待初审**
+    ....
+    stage = REVIEW
+    reviewStatus = PROCESSING
+    reviewTicket.step = FIRST_REVIEW
+    ====
+    **opsStatus** = PENDING_PLAT_CHECK
+    **mpsStatus** = PENDING_CHECK
+  ]
+  
+  card SecondReview [
+    **待复审**
+    ....
+    stage = REVIEW
+    reviewStatus = PROCESSING
+    reviewTicket.step = SECOND_REVIEW
+    ====
+    **opsStatus** = PENDING_PLAT_RECHECK
+    **mpsStatus** = PENDING_CHECK
+  ]
+  
+  card OrgCheck [
+    **待机构入账审核**
+    ....
+    stage = REVIEW
+    reviewStatus = PROCESSING
+    reviewTicket.step = ORG_REVIEW
+    ====
+    **opsStatus** = PENDING_ORG_CHECK
+    **mpsStatus** = PENDING_CHECK
+  ]
+  
+  card OrgDeclare [
+    **待机构申报审核**
+    ....
+    stage = REVIEW
+    reviewStatus = PROCESSING
+    reviewTicket.step = ORG_REVIEW
+    declareStatus = PENDING_ORG_VERIFY
+    ====
+    **opsStatus** = PENDING_ORG_DECLARE_VERIFY
+    **mpsStatus** = PENDING_CHECK
+  ]
+}
+
+package "SETTLED 阶段 (已入账)" <<SETTLED>> {
+  card SettledAuto [
+    **已入账(自动)**
+    ....
+    settleStatus = SETTLED
+    settleType = AUTO
+    ====
+    **opsStatus** = ALREADY_ENTER_ACCOUNT_AUTO
+    **mpsStatus** = ALREADY_ENTER_ACCOUNT
+  ]
+  
+  card SettledManual [
+    **已入账(手动)**
+    ....
+    settleStatus = SETTLED
+    settleType = MANUAL
+    ====
+    **opsStatus** = ALREADY_ENTER_ACCOUNT
+    **mpsStatus** = ALREADY_ENTER_ACCOUNT
+  ]
+}
+
+package "REFUND 阶段 (退款)" <<REFUND>> {
+  card RefundReview [
+    **退款待审核**
+    ....
+    refundStatus = PROCESSING
+    refundOrder.step = REVIEW
+    ====
+    **opsStatus** = PENDING_REFUND_PLAT_RECHECK
+    **mpsStatus** = PENDING_CHECK
+  ]
+  
+  card RefundProcessing [
+    **退款中**
+    ....
+    refundStatus = PROCESSING
+    refundOrder.step = ORG_PROCESS
+    ====
+    **opsStatus** = PENDING_REFUND
+    **mpsStatus** = PENDING_REFUND
+  ]
+  
+  card Refunded [
+    **已退款**
+    ....
+    refundStatus = COMPLETED
+    ====
+    **opsStatus** = REFUNDED
+    **mpsStatus** = REFUNDED
+  ]
+  
+  card RefundFailed [
+    **退款失败**
+    ....
+    refundStatus = FAILED
+    ====
+    **opsStatus** = REFUND_FAILED
+    **mpsStatus** = REFUND_FAILED
+  ]
+}
+
+' 流转关系
+OrderRC --> PendingRelate : 收款订单筛查 PASSED
+OrderRC --> SettledAuto : 收款订单筛查 PASSED (无需审核)
+
+PendingRelate --> FirstReview : 商户关联订单\n调用事中风控\n直接进入人工审核
+
+FirstReview --> SecondReview : 初审通过
+SecondReview --> OrgCheck : 复审通过(需机构审核)
+SecondReview --> SettledManual : 复审通过(无需机构审核)
+
+OrgCheck --> SettledManual : 机构审核通过
+OrgDeclare --> SettledManual : 申报审核通过
+
+note right of OrderRC
+  **新增状态**
+  风控调用
+  商户不可见
+end note
+
+note right of PendingRelate
+  **关键变更**
+  商户关联订单后
+  调用事中风控接口
+  但不影响流转
+  直接进入人工审核
+end note
+
+@enduml
