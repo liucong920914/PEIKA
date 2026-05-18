@@ -1,0 +1,136 @@
+@startuml 收款全流程状态机-OPS
+
+hide empty description
+scale 516 width
+
+[*] --> 待关联订单
+[*] --> 待风控决策
+
+待关联订单 -[#Blue]-> 待风控决策 : <font color=Blue>商户 关联订单
+待关联订单 -[#Blue]-> 待退款 : <font color=Blue>运营 发起退款
+
+待风控决策 -[#Red]-> 已入账 : <font color=Red>RISK PASS
+待风控决策 -[#Red]-> 待机构审核 : <font color=Red>RISK PASS
+待风控决策 -[#Red]-> 待关联订单 : <font color=Red>RISK REJECT
+待风控决策 -[#Red]-> 待风控决策 : <font color=Red>RISK REJECT
+待风控决策 -[#Red]-> 审核未通过 : <font color=Red>RISK REJECT
+待风控决策 -[#Red]-> 待退款 : <font color=Red>RISK REFUND
+
+待机构审核 --> 已入账 : ORG PASS
+待机构审核 --> 退款中 : ORG REFUND
+待机构审核 --> 挂起 : ORG REJECT
+
+挂起 -[#Blue]-> 待机构审核 : <font color=Blue>运营 重试
+挂起 -[#Blue]-> 待风控决策 : <font color=Blue>运营 转风控
+
+审核未通过 -[#Blue]-> 待风控决策 : <font color=Blue>商户 补充交易材料
+审核未通过 -[#Blue]-> 待退款 : <font color=Blue>运营 退款
+
+待退款 -[#Orange]-> 退款中 : <font color=Orange>清算 选择退款方式
+
+退款中 --> 退款失败 : 系统 更新退款失败
+退款中 --> 已退款 : 系统 更新退款成功
+退款中 -[#Orange]-> 已退款 : <font color=Orange>清算 手工更新退款成功
+
+退款失败 -[#Orange]-> 退款中 : <font color=Orange>清算 重新发起退款
+
+已入账 --> [*]
+已退款 --> [*]
+
+待关联订单 : SETTLE_STATUS = UNSETTLED
+待关联订单 : REFUND_STATUS = NONE
+待关联订单 : STAGE = MODIFY
+待关联订单 : RISK_STATUS = 
+待关联订单 : ORG_STATUS = 
+
+' 待风控决策 : MPS 审核中
+待风控决策 : SETTLE_STATUS = UNSETTLED
+待风控决策 : REFUND_STATUS = NONE
+待风控决策 : STAGE = REVIEW
+待风控决策 : RISK_STATUS = 
+待风控决策 : ORG_STATUS = 
+
+' 待机构审核 : MPS 审核中
+待机构审核 : SETTLE_STATUS = UNSETTLED
+待机构审核 : REFUND_STATUS = NONE
+待机构审核 : STAGE = ORG_REVIEW
+待机构审核 : RISK_STATUS = 
+待机构审核 : ORG_STATUS = 
+
+' 挂起 : MPS 审核中
+挂起 : SETTLE_STATUS = UNSETTLED
+挂起 : REFUND_STATUS = NONE
+挂起 : STAGE = ORG_REVIEW
+挂起 : RISK_STATUS = REJECTED
+挂起 : ORG_STATUS = 
+
+审核未通过 : MPS 待补充交易材料
+审核未通过 : SETTLE_STATUS = UNSETTLED
+审核未通过 : REFUND_STATUS = NONE
+审核未通过 : STAGE = MODIFY
+审核未通过 : RISK_STATUS = REJECTED
+审核未通过 : ORG_STATUS = 
+
+' 待退款 : MPS 审核中
+待退款 : SETTLE_STATUS = UNSETTLED
+待退款 : REFUND_STATUS = PENDING_CONFIRM
+待退款 : STAGE =
+待退款 : RISK_STATUS = 
+待退款 : ORG_STATUS = 
+
+退款中 : SETTLE_STATUS = UNSETTLED
+退款中 : REFUND_STATUS = PROCESSING
+退款中 : STAGE =
+退款中 : RISK_STATUS = 
+退款中 : ORG_STATUS =
+
+退款失败 : SETTLE_STATUS = UNSETTLED
+退款失败 : REFUND_STATUS = FAILED
+退款失败 : STAGE =
+退款失败 : RISK_STATUS = 
+退款失败 : ORG_STATUS =
+
+已退款 : SETTLE_STATUS = <font color=Red>SETTLED
+已退款 : REFUND_STATUS = COMPLETED
+已退款 : STAGE =
+已退款 : RISK_STATUS = 
+已退款 : ORG_STATUS =
+
+已入账 : SETTLE_STATUS = SETTLED
+已入账 : REFUND_STATUS = NONE
+已入账 : STAGE = 
+已入账 : RISK_STATUS = PASSED
+已入账 : ORG_STATUS =
+
+@enduml
+
+' ================================================
+
+' @startuml 收款全流程状态机-MPS
+
+' hide empty description
+' scale 516 width
+
+' [*] --> 待关联订单
+' [*] --> 审核中
+
+' 待关联订单 --> 审核中
+' 待关联订单 --> 退款中
+
+' 审核中 -[#Red]-> 已入账 : <font color=Red>PASS & ORG_PASS
+' 审核中 -[#Red]-> 待关联订单 : <font color=Red>REJECT
+' 审核中 -[#Red]-> 待补充交易材料 : <font color=Red>REJECT
+' 审核中 -[#Red]-> 退款中 : <font color=Red>REFUND
+
+' 待补充交易材料 --> 审核中
+' 待补充交易材料 --> 退款中
+
+' 退款中 --> 退款失败
+' 退款中 --> 已退款
+
+' 退款失败 -[#Orange]-> 退款中 : <font color=Orange>重新发起退款\n<font color=Orange>待建设
+
+' 已入账 --> [*]
+' 已退款 --> [*]
+
+' @enduml

@@ -1,0 +1,33 @@
+@startuml 收款全流程交易域状态机-基本状态版本
+
+hide empty description
+scale 516 width
+
+[*] --> 待关联订单
+[*] --> 待风控审核 : 系统 自动关联合同
+
+待关联订单 --> 待风控审核 : 用户 手动关联合同
+' 待关联订单 -[#Blue]-> 退款中 : <font color=blue>运营或用户 主动提出要退款
+
+待风控审核 -[#Orange]-> 已入账 : <font color=Orange>PASS（非申报类渠道）
+待风控审核 -[#Orange]-> 待机构审核 : <font color=Orange>PASS（申报类渠道） 
+待风控审核 -[#Orange]-> 退款中 : <font color=Orange>REFUND
+待风控审核 -[#Orange]-> 审核未通过 : <font color=Orange>REJECT
+
+待机构审核 --> 已入账 : ORG PASS
+待机构审核 --> 审核未通过 : ORG REJECT
+待机构审核 --> 退款中 : ORG REFUND
+
+审核未通过 --> 退款中 : 运营或用户 申请退款
+审核未通过 --> 待风控审核 : 运营或用户 补充材料后重新提交风控审核
+
+退款中 -[#Red]-> 已退款 : <font color=red>待补充打款退回\n<font color=red>和手工退款记账的处理
+退款中 --> 退款失败 : 收到渠道通知退款失败
+
+退款失败 -[#Red]-> 退款中 : <font color=red>目前处理逻辑不完备，待建设
+
+已退款 --> [*]
+
+已入账 --> [*]
+
+@enduml

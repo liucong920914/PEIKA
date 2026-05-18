@@ -1,0 +1,31 @@
+@startuml
+autonumber
+
+participant "上游系统" as mq
+participant "交易域" as jy
+participant "accounting-adaptor" as adaptor
+participant "账户会计系统" as new_account
+
+mq --> jy : 付款下单
+group 记账事务
+activate jy
+jy -> adaptor : 记账
+activate adaptor
+adaptor -> new_account : <font color=blue>商户付款申请
+deactivate adaptor
+deactivate jy
+end
+
+mq --> jy : 付款成功通知
+group 记账事务
+activate jy
+jy -> adaptor : 记账
+activate adaptor
+adaptor -> new_account : <font color=blue>商户付款成功
+adaptor -> new_account : <font color=blue>代付对账-付款主账户
+adaptor -> new_account : <font color=blue>代付结转-付款主账户
+deactivate adaptor
+deactivate jy
+end
+
+@enduml

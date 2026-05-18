@@ -1,0 +1,117 @@
+@startuml B2B收款订单-风控域处理时序
+
+participant 交易域 as JY
+participant 风控域微服务 as FK
+participant 道琼斯服务 as DQ
+participant 风控引擎 as YQ
+participant 人工审核 as RG
+
+==B2B收款订单审核 场景一==
+ 
+' autonumber
+
+JY -> FK : 交易域请求风控域进行审核
+activate FK
+FK -> FK : 初始化一条审核记录\nREVIEW_STEP = <font color=blue>START
+
+FK -> DQ : 请求道琼斯
+DQ -> FK : 道琼斯返回
+
+FK -> YQ : 请求引擎\nREVIEW_STEP = <font color=blue>ENGINE_REVIEW
+deactivate FK
+YQ -> YQ : 在B2B收款事件中用选择器筛选规则组
+
+YQ -> YQ : 白名单免关联入账规则组
+note right of DQ
+    规则组的决策结果为SYSTEM PASS和SYSTEM REJECT两种
+end note
+
+alt 规则组运行结果 SYSTEM PASS
+    YQ -> FK : 返回触发结果
+    FK -> FK : REVIEW_STEP = <font color=blue>COMPLETE\nREVIEW_RESULT = <font color=red>SYSTEM PASS
+    FK -> JY : 返回交易域
+    JY -> JY : 入账
+end
+
+alt 规则组运行结果 SYSTEM REJECT
+    YQ -> FK : 返回触发结果
+    FK -> FK : REVIEW_STEP = <font color=blue>COMPLETE\nREVIEW_RESULT = <font color=red>SYSTEM REJECT
+    FK -> JY : 返回交易域
+    JY -> JY : 重新关联合同订单
+end
+
+==B2B收款订单审核 场景二==
+
+JY -> FK : 交易域请求风控域进行审核
+activate FK
+FK -> FK : 初始化一条审核记录\nREVIEW_STEP = <font color=blue>START
+
+FK -> DQ : 请求道琼斯
+DQ -> FK : 道琼斯返回
+
+FK -> YQ : 请求引擎\nREVIEW_STEP = <font color=blue>ENGINE_REVIEW
+deactivate FK
+YQ -> YQ : 在B2B收款事件中用选择器筛选规则组
+
+YQ -> YQ : 关联合同订单入账规则组
+note right of DQ
+    规则组的决策结果为SYSTEM PASS和SKIP两种
+end note
+
+alt 规则组运行结果 SYSTEM PASS
+    YQ -> FK : 返回触发结果
+    FK -> FK : REVIEW_STEP = <font color=blue>COMPLETE\nREVIEW_RESULT = <font color=red>SYSTEM PASS
+    FK -> JY : 返回交易域
+    JY -> JY : 重新关联合同订单
+end
+
+alt 规则组的运行结果 SKIP
+    YQ -> FK : 返回触发结果 
+    FK -> FK : REVIEW_STEP = <font color=blue>FIRST REVIEW
+    note right of FK
+        人工初复审的决策结果为MANUAL PASS、MANUAL REJECT和MANUAL REFUND三种
+    end note
+
+    alt 初复审通过
+        FK -> RG : 人工初审
+        RG -> FK : 初审通过
+        FK -> FK : REVIEW_STEP = <font color=blue>SECOND_REVIEW
+        FK -> RG : 人工复审
+        RG -> FK : 复审通过
+        FK -> FK : REVIEW_STEP = <font color=blue>COMPLETE\nREVIEW_RESULT = <font color=red>MANUAL PASS
+        FK -> JY : 返回交易域
+        JY -> JY : 入账
+    end
+
+    alt 初复审后驳回
+        FK -> RG : 人工初审
+        RG -> FK : 初审通过
+        FK -> FK : REVIEW_STEP = <font color=blue>SECOND_REVIEW
+        FK -> RG : 人工复审
+        RG -> FK : 复审驳回
+        FK -> FK : REVIEW_STEP = <font color=blue>FIRST_REVIEW
+        RG -> FK : 初审驳回
+        FK -> FK : REVIEW_STEP = <font color=blue>COMPLETE\nREVIEW_RESULT = <font color=red>MANUAL REJECT
+        FK -> JY : 返回交易域
+        JY -> JY : 入账
+    end
+
+    alt 初审后退款
+        FK -> RG : 人工初审
+        RG -> FK : 初审拒绝
+        FK -> FK : REVIEW_STEP = <font color=blue>COMPLETE\nREVIEW_RESULT = <font color=red>MANUAL REFUND
+        FK -> JY : 返回交易域
+        JY -> JY : 退款
+    end
+
+    note right of FK
+        可能有其他初复审的流程，以上仅举三例
+    end note
+
+end
+
+note right of FK
+    篇幅有限 交互时序图先画这么多
+end note
+
+@enduml
